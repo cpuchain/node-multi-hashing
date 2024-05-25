@@ -81,7 +81,7 @@
                 "<!(node -e \"require('nan')\")"
             ],
             "cflags_cc": [
-                "-std=c++14"
+                "-std=c++17"
             ],
         }
     ]
