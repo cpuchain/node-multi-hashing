@@ -1,5 +1,5 @@
 /*-
- * Copyright 2005,2007,2009 Colin Percival
+ * Copyright 2007-2014 Colin Percival
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,32 +22,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef SHA256_H
-#define SHA256_H
+#ifndef _SYSENDIAN_H_
+#define _SYSENDIAN_H_
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-#include "stdint.h"
-#else
 #include <stdint.h>
-#endif
 
-#include "../sha3/sph_types.h"
-#include <string.h>
+/* Avoid namespace collisions with BSD <sys/endian.h>. */
+#define be32dec libcperciva_be32dec
+#define be32enc libcperciva_be32enc
+#define be64enc libcperciva_be64enc
+#define le32dec libcperciva_le32dec
+#define le32enc libcperciva_le32enc
 
-static __inline uint32_t
-be32dec(const void *pp)
+static inline uint32_t
+be32dec(const void * pp)
 {
-	const uint8_t *p = (uint8_t const *)pp;
+	const uint8_t * p = (uint8_t const *)pp;
 
 	return ((uint32_t)(p[3]) + ((uint32_t)(p[2]) << 8) +
 	    ((uint32_t)(p[1]) << 16) + ((uint32_t)(p[0]) << 24));
 }
 
-static __inline void
-be32enc(void *pp, uint32_t x)
+static inline void
+be32enc(void * pp, uint32_t x)
 {
 	uint8_t * p = (uint8_t *)pp;
 
@@ -57,17 +56,32 @@ be32enc(void *pp, uint32_t x)
 	p[0] = (x >> 24) & 0xff;
 }
 
-static __inline uint32_t
-le32dec(const void *pp)
+static inline void
+be64enc(void * pp, uint64_t x)
 {
-	const uint8_t *p = (uint8_t const *)pp;
+	uint8_t * p = (uint8_t *)pp;
+
+	p[7] = x & 0xff;
+	p[6] = (x >> 8) & 0xff;
+	p[5] = (x >> 16) & 0xff;
+	p[4] = (x >> 24) & 0xff;
+	p[3] = (x >> 32) & 0xff;
+	p[2] = (x >> 40) & 0xff;
+	p[1] = (x >> 48) & 0xff;
+	p[0] = (x >> 56) & 0xff;
+}
+
+static inline uint32_t
+le32dec(const void * pp)
+{
+	const uint8_t * p = (uint8_t const *)pp;
 
 	return ((uint32_t)(p[0]) + ((uint32_t)(p[1]) << 8) +
 	    ((uint32_t)(p[2]) << 16) + ((uint32_t)(p[3]) << 24));
 }
 
-static __inline void
-le32enc(void *pp, uint32_t x)
+static inline void
+le32enc(void * pp, uint32_t x)
 {
 	uint8_t * p = (uint8_t *)pp;
 
@@ -77,34 +91,4 @@ le32enc(void *pp, uint32_t x)
 	p[3] = (x >> 24) & 0xff;
 }
 
-
-typedef struct SHA256Context {
-	uint32_t state[8];
-	uint32_t count[2];
-	unsigned char buf[64];
-} sha256_ctx;
-
-typedef struct HMAC_SHA256Context {
-	sha256_ctx ictx;
-	sha256_ctx octx;
-} hmac_sha256_ctx;
-
-void	sha256_init(sha256_ctx *);
-void	sha256_update(sha256_ctx *, const void *, size_t);
-void	sha256_final(unsigned char [32], sha256_ctx *);
-void	sha256_buf(const void* in, size_t len, uint8_t digest[32]);
-void	sha256_transform(uint32_t * state, const unsigned char block[64]);
-void	hmac_sha256_init(hmac_sha256_ctx *, const void *, size_t);
-void	hmac_sha256_update(hmac_sha256_ctx *, const void *, size_t);
-void	hmac_sha256_final(unsigned char [32], hmac_sha256_ctx *);
-void	hmac_sha256_buf(const void* K, size_t Klen, const void* in, size_t len, uint8_t digest[32]);
-
-/**
- * PBKDF2_SHA256(passwd, passwdlen, salt, saltlen, c, buf, dkLen):
- * Compute PBKDF2(passwd, salt, c, dkLen) using HMAC-SHA256 as the PRF, and
- * write the output to buf.  The value dkLen must be at most 32 * (2^32 - 1).
- */
-void	PBKDF2_SHA256(const uint8_t *, size_t, const uint8_t *, size_t,
-    uint64_t, uint8_t *, size_t);
-
-#endif
+#endif /* !_SYSENDIAN_H_ */
